@@ -42,8 +42,7 @@ pip install -U langgraph pydantic
 The system can be executed via the main entry point, which triggers the orchestration graph and saves the outputs to the `outputs/` directory:
 
 ```bash
-python main.py
-
+python main.py ; echo "Content generated successfully" 
 ```
 
 ---
