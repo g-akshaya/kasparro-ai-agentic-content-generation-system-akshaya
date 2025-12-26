@@ -71,11 +71,10 @@ The system is built as a **State Machine** where a shared state object is passed
 
 ## 🧪 Testing the System
 
-You can verify the output by checking the generated files in the `outputs/` folder. To visualize the graph execution flow locally, you can use the built-in Mermaid visualization tool within your Python script:
-
+You can verify the output by checking the generated files in the `outputs/` folder.
 ```python
 # To see a text-based version of your graph
-print(app.get_graph().draw_ascii())
+python -c "from main import app; print(app.get_graph().draw_ascii())"
 
 ```
 
