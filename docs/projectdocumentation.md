@@ -1,103 +1,133 @@
 ## 1. Problem Statement
 
-The objective is to design a modular agentic system capable of transforming raw, unstructured product data into structured, machine-readable content pages. Traditional single-prompt LLM wrappers are insufficient for production environments because they lack modularity, are difficult to debug, and fail to provide the granular control needed for complex content generation. This project implements a sophisticated **Multi-Agent Orchestration System** to automate the creation of FAQs, Product Pages, and Comparison Pages with high reliability.
+The objective of this project is to design a **modular, agentic system** capable of transforming raw or semi-structured product data into structured, machine-readable content pages.
+
+Traditional single-prompt or monolithic LLM wrappers are insufficient for production environments because they:
+- lack modularity,
+- are difficult to debug and extend,
+- provide limited control over intermediate reasoning and transformations.
+
+To address these limitations, this project implements a **Multi-Agent Orchestration System** that automates the generation of:
+- FAQ Pages,
+- Product Description Pages,
+- Comparison Pages,
+
+while maintaining high reliability, deterministic behavior, and clean separation of concerns.
+
+---
 
 ## 2. Solution Overview
 
-The solution utilizes an **Agentic State Machine** architecture built on **LangGraph**. Instead of a monolithic script, the system is decomposed into specialized agents with distinct responsibilities:
+The solution is built using an **Agentic State Machine architecture** powered by **LangGraph**.  
+Instead of a single script, the system is decomposed into multiple specialized agents, each responsible for a clearly defined task.
 
-* 
-**Structured Parsing:** An agent dedicated to creating a clean "Internal Model" from raw text.
+The system is organized around the following agent roles:
 
+- **Structured Parsing**  
+  A dedicated agent converts raw input into a clean, normalized internal data model.
 
-* 
-**Synthetic Brainstorming:** An agent focused on generating 15 categorized user questions (Informational, Safety, etc.).
+- **Synthetic Brainstorming**  
+  A question-generation agent analyzes the internal model to produce **15 categorized user questions** (e.g., Informational, Safety, Usage).
 
+- **Template Assembly**  
+  A final assembly agent applies reusable **Logic Blocks** and fills predefined JSON templates to generate three distinct content pages.
 
-* 
-**Template Assembly:** A final agent that uses "Logic Blocks" to fill JSON templates for three unique pages.
+This approach ensures modularity, extensibility, and production-readiness.
 
+---
 
+## 3. Scope & Assumptions
 
-## 3. Scopes & Assumptions
+- **Data Constraint**  
+  The system strictly adheres to the provided dataset for the primary product (GlowBoost). No external research, enrichment, or hallucinated facts are permitted.
 
-* 
-**Data Constraint:** The system strictly adheres to the provided dataset for the primary product (GlowBoost). No external research or hallucinations are permitted.
+- **Fictional Data Generation**  
+  For comparison purposes, the system is scoped to autonomously generate a fictional **Product B**, structured similarly to the primary product.
 
+- **Technical Stack Assumption**  
+  The architecture assumes a graph-based orchestration model (Directed Acyclic Graph or State Machine) for message passing and state updates.
 
-* 
-**Fictional Data Generation:** For comparison purposes, the system is scoped to autonomously generate a fictional "Product B" with a similar structure to Product A.
+- **Output Requirement**  
+  All generated pages must be strictly valid, machine-readable JSON suitable for downstream systems.
 
-
-* 
-**Technical Stack:** The architecture assumes a graph-based orchestration (DAG or State Machine) to handle message passing and state updates.
-
-
-* 
-**Output Requirement:** Every page generated is strictly valid, machine-readable JSON.
-
-
+---
 
 ## 4. System Design (Mandatory)
 
 ### A. Architectural Design: Directed Acyclic Graph (DAG)
 
-The system follows a sequential pipeline where data flows through nodes. Each node represents an AI Agent or a Logic Block.
+The system follows a **sequential DAG-based pipeline** in which data flows through a series of nodes.  
+Each node represents either:
+- an AI Agent, or
+- a reusable Logic Block.
+
+The flow is linear, deterministic, and non-cyclic, ensuring predictable execution.
+
+---
 
 ### B. Agent Definitions & Boundaries
 
-Each agent in the system follows the principle of **Single Responsibility**:
+Each agent adheres to the **Single Responsibility Principle**, with clearly defined inputs and outputs.
 
-1. **Parser Agent:** (Input: Raw String  Output: JSON Schema). Normalizes the "GlowBoost" data into a Python dictionary.
+1. **Parser Agent**  
+   - **Input:** Raw product string  
+   - **Output:** Normalized JSON schema  
+   - **Responsibility:** Converts raw GlowBoost data into a structured Python dictionary.
 
+2. **QA Generator Agent**  
+   - **Input:** Structured product schema  
+   - **Output:** Categorized question list  
+   - **Responsibility:** Generates 15 user questions across predefined categories.
 
-2. **QA Generator Agent:** (Input: Schema  Output: List). Analyzes the internal model to brainstorm 15 questions across five categories.
+3. **Assembly Agent**  
+   - **Input:** Product schema + question list  
+   - **Output:** Final content pages  
+   - **Responsibility:** Acts as the orchestrator for the Template Engine and content assembly.
 
-
-3. **Assembly Agent:** (Input: List + Schema  Output: Final Pages). This agent acts as the orchestrator for the **Template Engine**.
-
-
+---
 
 ### C. Reusable Logic Blocks
 
-The system avoids hard-coded content. Instead, it uses **Logic Blocks**—reusable functions that apply specific rules to data:
+To avoid hard-coded content, the system relies on **Logic Blocks**—stateless, reusable functions that apply deterministic rules to data.
 
-* 
-`generate-benefits-block`: Transforms the "Benefits" field into descriptive marketing copy.
+Key logic blocks include:
 
+- `generate-benefits-block`  
+  Transforms the raw “Benefits” field into descriptive, structured copy.
 
-* 
-`extract-usage-block`: Parses "How to Use" text into a step-by-step list.
+- `extract-usage-block`  
+  Parses “How to Use” text into step-by-step usage instructions.
 
+- `compare-ingredients-block`  
+  Compares GlowBoost ingredients with Product B to highlight key differences.
 
-* 
-`compare-ingredients-block`: Compares GlowBoost ingredients against Product B to identify key differences.
+These blocks are independent of agents and can be reused across pipelines.
 
-
+---
 
 ### D. Template Engine
 
-The Template Engine defines the "blueprint" for each page. It specifies:
+The Template Engine defines the structural blueprint for each generated page.  
+Each template specifies:
 
-* 
-**Fields:** Which data points are required.
+- **Fields:** Required data points for the page  
+- **Rules:** Constraints such as minimum FAQ count  
+- **Dependencies:** Logic Blocks required to populate specific sections  
 
+This separation ensures consistency and flexibility across content types.
 
-* 
-**Rules:** Formatting requirements (e.g., minimum 5 Q&As).
-
-
-* 
-**Dependencies:** Which Logic Blocks are required to populate specific fields.
-
-
+---
 
 ### E. Data Flow Sequence
 
-1. **Start:** Raw data is fed into the `State`.
-2. **Node 1 (Parser):** State is updated with `product_model`.
-3. **Node 2 (QA Gen):** State is updated with `categorized_questions`.
-4. **Node 3 (Assembly):** The `Content Writer` pulls from Logic Blocks to generate `faq.json`, `product_page.json`, and `comparison_page.json`.
-5. **End:** The system returns a final, validated State object.
+1. **Start:** Raw product data is injected into the shared `State`.
+2. **Node 1 – Parser Agent:** State is updated with `product_model`.
+3. **Node 2 – QA Generator Agent:** State is enriched with `categorized_questions`.
+4. **Node 3 – Assembly Agent:** Logic Blocks and templates are applied to generate:
+   - `faq.json`
+   - `product_page.json`
+   - `comparison_page.json`
+5. **End:** The system returns a final, fully validated State object containing all outputs.
 
 ---
+
