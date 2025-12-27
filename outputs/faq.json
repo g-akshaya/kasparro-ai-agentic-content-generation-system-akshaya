@@ -1,0 +1,30 @@
+{
+  "product_name": "GlowBoost Vitamin C Serum",
+  "faqs": [
+    {
+      "question": "What is GlowBoost Vitamin C Serum?",
+      "answer": "Based on provided product data.",
+      "category": "Informational"
+    },
+    {
+      "question": "How should GlowBoost be applied?",
+      "answer": "Based on provided product data.",
+      "category": "Usage"
+    },
+    {
+      "question": "Is it safe for sensitive skin?",
+      "answer": "Based on provided product data.",
+      "category": "Safety"
+    },
+    {
+      "question": "What is the price?",
+      "answer": "Based on provided product data.",
+      "category": "Purchase"
+    },
+    {
+      "question": "How does it compare to other serums?",
+      "answer": "Based on provided product data.",
+      "category": "Comparison"
+    }
+  ]
+}
